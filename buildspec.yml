@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install pytest
+
+  pre_build:
+    commands:
+      - echo "Running unit tests..."
+      - pytest tests/ -v
+
+  build:
+    commands:
+      - echo "Packaging Lambda function..."
+      - cd src && zip -r ../lambda_function.zip lambda_function.py
+
+  post_build:
+    commands:
+      - echo "Build complete"
+
+artifacts:
+  files:
+    - lambda_function.zip
+    - cfn/template.yaml
