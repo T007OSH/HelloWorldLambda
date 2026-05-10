@@ -27,7 +27,6 @@ Resources:
   HelloWorldLambdaRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: HelloWorldLambdaRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -53,7 +52,6 @@ Resources:
   MarginCallCheckerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: MarginCallCheckerRole
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
