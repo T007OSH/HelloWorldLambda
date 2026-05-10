@@ -131,6 +131,8 @@ Resources:
                   - iam:DeleteRole
                   - iam:AttachRolePolicy
                   - iam:DetachRolePolicy
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
                   - iam:GetRole
                   - iam:PassRole
                 Resource: "*"
@@ -138,6 +140,13 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: !Sub "${ArtifactBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:DeleteBucket
+                  - s3:PutBucketNotification
+                  - s3:GetBucketNotification
+                Resource: "arn:aws:s3:::bkt-doc-src-margin-call"
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -209,7 +218,9 @@ Resources:
                 ParameterOverrides: !Sub |
                   {
                     "S3Bucket": { "Fn::GetArtifactAtt": ["BuildOutput", "BucketName"] },
-                    "S3Key": { "Fn::GetArtifactAtt": ["BuildOutput", "ObjectKey"] }
+                    "HelloWorldS3Key": "hello_world.zip",
+                    "MarginCallCheckerS3Key": "margin_call_checker.zip",
+                    "AgenticLayerS3Key": "agentic-layer.zip"
                   }
                 RoleArn: !GetAtt CloudFormationRole.Arn
                 Capabilities: CAPABILITY_NAMED_IAM
