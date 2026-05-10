@@ -22,6 +22,10 @@ phases:
       - mkdir -p layer_build/python
       - pip install -r layers/agentic-layer/requirements.txt -t layer_build/python
       - cd layer_build && zip -r ../agentic-layer.zip python/ && cd ..
+      - echo "Uploading artifacts to S3..."
+      - aws s3 cp hello_world.zip s3://$ARTIFACT_BUCKET/hello_world.zip
+      - aws s3 cp margin_call_checker.zip s3://$ARTIFACT_BUCKET/margin_call_checker.zip
+      - aws s3 cp agentic-layer.zip s3://$ARTIFACT_BUCKET/agentic-layer.zip
 
   post_build:
     commands:
@@ -29,7 +33,4 @@ phases:
 
 artifacts:
   files:
-    - hello_world.zip
-    - margin_call_checker.zip
-    - agentic-layer.zip
     - cfn/template.yaml
