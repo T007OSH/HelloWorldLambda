@@ -1,0 +1,33 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install pytest
+
+  pre_build:
+    commands:
+      - echo "Running unit tests..."
+      - pytest tests/ -v
+
+  build:
+    commands:
+      - echo "Packaging Lambda function..."
+      - cd src && zip -r ../lambda_function.zip lambda_function.py
+      - cd ..
+      - echo "Packaging agentic layer..."
+      - mkdir -p layer_build/python
+      - pip install -r layers/agentic-layer/requirements.txt -t layer_build/python
+      - cd layer_build && zip -r ../agentic-layer.zip python/
+
+  post_build:
+    commands:
+      - echo "Build complete"
+
+artifacts:
+  files:
+    - lambda_function.zip
+    - agentic-layer.zip
+    - cfn/template.yaml
