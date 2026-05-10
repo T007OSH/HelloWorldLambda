@@ -14,8 +14,14 @@ phases:
 
   build:
     commands:
-      - echo "Packaging Lambda function..."
-      - cd src && zip -r ../lambda_function.zip lambda_function.py
+      - echo "Packaging HelloWorld Lambda..."
+      - cd src && zip ../hello_world.zip lambda_function.py && cd ..
+      - echo "Packaging MarginCallChecker Lambda..."
+      - cd src && zip ../margin_call_checker.zip margin_call_checker.py && cd ..
+      - echo "Packaging agentic layer..."
+      - mkdir -p layer_build/python
+      - pip install -r layers/agentic-layer/requirements.txt -t layer_build/python
+      - cd layer_build && zip -r ../agentic-layer.zip python/ && cd ..
 
   post_build:
     commands:
@@ -23,5 +29,7 @@ phases:
 
 artifacts:
   files:
-    - lambda_function.zip
+    - hello_world.zip
+    - margin_call_checker.zip
+    - agentic-layer.zip
     - cfn/template.yaml

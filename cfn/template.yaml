@@ -1,16 +1,27 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Hello World Lambda Function
+Description: DevOps Lambda Functions
 
 Parameters:
   S3Bucket:
     Type: String
-    Description: S3 bucket containing the Lambda deployment package
-  S3Key:
+    Description: S3 bucket containing the Lambda deployment packages
+  HelloWorldS3Key:
     Type: String
-    Description: S3 key for the Lambda deployment package
+    Description: S3 key for the HelloWorld Lambda deployment package
+  MarginCallCheckerS3Key:
+    Type: String
+    Description: S3 key for the MarginCallChecker Lambda deployment package
+  AgenticLayerS3Key:
+    Type: String
+    Description: S3 key for the agentic layer zip
+  StrandsLayerArn:
+    Type: String
+    Description: ARN of the official Strands Agents Lambda layer
+    Default: arn:aws:lambda:us-east-1:654654176498:layer:strands-agents-layer:1
 
 Resources:
-  LambdaExecutionRole:
+  # ---------- HelloWorld Lambda ----------
+  HelloWorldLambdaRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: HelloWorldLambdaRole
@@ -30,15 +41,102 @@ Resources:
       FunctionName: HelloWorldFunction
       Runtime: python3.12
       Handler: lambda_function.lambda_handler
-      Role: !GetAtt LambdaExecutionRole.Arn
+      Role: !GetAtt HelloWorldLambdaRole.Arn
       Code:
         S3Bucket: !Ref S3Bucket
-        S3Key: !Ref S3Key
+        S3Key: !Ref HelloWorldS3Key
+
+  # ---------- MarginCallChecker Lambda ----------
+  MarginCallCheckerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MarginCallCheckerRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3ReadAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::bkt-doc-src-margin-call/*"
+        - PolicyName: BedrockInvokeAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: "*"
+
+  AgenticLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: agentic-layer
+      Description: Additional dependencies for agentic Lambda functions
+      Content:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref AgenticLayerS3Key
+      CompatibleRuntimes:
+        - python3.12
+
+  MarginCallCheckerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: MarginCallCheckerFunction
+      Runtime: python3.12
+      Handler: margin_call_checker.lambda_handler
+      Role: !GetAtt MarginCallCheckerRole.Arn
+      Timeout: 120
+      MemorySize: 512
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref MarginCallCheckerS3Key
+      Layers:
+        - !Ref StrandsLayerArn
+        - !Ref AgenticLayer
+
+  S3InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MarginCallCheckerFunction
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub "arn:aws:s3:::bkt-doc-src-margin-call"
+
+  MarginCallSourceBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: S3InvokePermission
+    Properties:
+      BucketName: bkt-doc-src-margin-call
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt MarginCallCheckerFunction.Arn
 
 Outputs:
-  FunctionArn:
-    Description: Lambda Function ARN
+  HelloWorldFunctionArn:
+    Description: HelloWorld Lambda Function ARN
     Value: !GetAtt HelloWorldFunction.Arn
-  FunctionName:
-    Description: Lambda Function Name
+  HelloWorldFunctionName:
+    Description: HelloWorld Lambda Function Name
     Value: !Ref HelloWorldFunction
+  MarginCallCheckerFunctionArn:
+    Description: MarginCallChecker Lambda Function ARN
+    Value: !GetAtt MarginCallCheckerFunction.Arn
+  MarginCallCheckerFunctionName:
+    Description: MarginCallChecker Lambda Function Name
+    Value: !Ref MarginCallCheckerFunction
+  MarginCallSourceBucketArn:
+    Description: Margin Call Source S3 Bucket ARN
+    Value: !GetAtt MarginCallSourceBucket.Arn
