@@ -8,12 +8,15 @@ Parameters:
   HelloWorldS3Key:
     Type: String
     Description: S3 key for the HelloWorld Lambda deployment package
+    Default: hello_world.zip
   MarginCallCheckerS3Key:
     Type: String
     Description: S3 key for the MarginCallChecker Lambda deployment package
+    Default: margin_call_checker.zip
   AgenticLayerS3Key:
     Type: String
     Description: S3 key for the agentic layer zip
+    Default: agentic-layer.zip
   StrandsLayerArn:
     Type: String
     Description: ARN of the official Strands Agents Lambda layer
