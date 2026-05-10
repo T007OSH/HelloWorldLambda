@@ -96,6 +96,9 @@ Resources:
       Role: !GetAtt MarginCallCheckerRole.Arn
       Timeout: 120
       MemorySize: 512
+      Environment:
+        Variables:
+          OTEL_PYTHON_CONTEXT: contextvars_context
       Code:
         S3Bucket: !Ref S3Bucket
         S3Key: !Ref MarginCallCheckerS3Key
