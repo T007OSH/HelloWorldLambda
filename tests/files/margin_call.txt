@@ -1,0 +1,4 @@
+margin call
+date:08/08/2026
+Amount: $1,000,000
+Counterparty; Morgan Stanley
